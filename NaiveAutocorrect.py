@@ -1,11 +1,25 @@
 import concurrent.futures
 import multiprocessing
+import string
+
+import nltk
 from multiprocessing import Pool
 import json
 import threading
 from time import time
 
 import numpy as np
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+nltk.download('reuters')
+nltk.download('punkt')
+from nltk.corpus import reuters
 
 alph = "abcdefghijklmnopqrstuvwxyz"
 
@@ -35,14 +49,61 @@ def process_original_json(filepath):
 
 #process_original_json('ap201001.json')
 
-with open('processed_words.json') as json_file:
-    terms = json.load(json_file)
+def process_ngrams():
 
-total_words = 0
-for term in terms.keys():
-    total_words += terms[term]
+    sentences = reuters.sents()
+    words = reuters.words()
+    trigram = {}
+    fourgram = {}
+    for sentence in sentences:
+        tri = []
+        four = []
+        for word in sentence:
+            if word not in string.punctuation:
+                word = word.lower()
+                if len(tri) < 3:
+                    tri.append(str(word))
+                elif len(tri) >= 3:
+                    if tuple(tri) in trigram.keys():
+                        trigram[tuple(tri)] += 1
+                    else:
+                        trigram[tuple(tri)] = 1
+                if len(four) < 4:
+                    four.append(str(word))
+                elif len(four) >= 4:
+                    if tuple(four) in fourgram.keys():
+                        fourgram[tuple(four)] += 1
+                    else:
+                        fourgram[tuple(four)] = 1
+    tri_strings = {}
+    for tup in trigram.keys():
+        tri_strings[" ".join(tup)] = trigram[tup]
+    four_strings = {}
+    for tup in fourgram.keys():
+        four_strings[" ".join(tup)] = fourgram[tup]
+    with open("trigrams.json", "w") as outfile:
+        json.dump(tri_strings, outfile)
+    with open("fourgrams.json", "w") as outfile:
+        json.dump(four_strings, outfile)
 
-def word_stats(term):
+def open_single():
+    with open('processed_words.json') as json_file:
+        terms = json.load(json_file)
+    total_words = 0
+    for term in terms.keys():
+        total_words += terms[term]
+    return terms, total_words
+
+
+def open_ngram():
+    with open('trigrams.json') as json_file:
+        trigrams_list = json.load(json_file)
+    trigrams = {}
+    for trigram in trigrams_list:
+        print(trigram)
+
+
+def word_stats(term, terms, total_words):
     return terms[term] / total_words
 
 def minEditDistance(source, target):
@@ -79,7 +140,7 @@ def oneEditDistance(term):
     oneEditDistances[term] = set(dict)
     return oneEditDistances[term]
 
-def nEditDistance(n, term):
+def nEditDistance(n, term, terms):
     dict = []
     prev_edits = oneEditDistance(term)
     for i in range(n - 1):
@@ -98,10 +159,10 @@ def findSimilarWords(n, word, low, ret_words):
         if dist < n:
             ret_words.append((dist, t))
             #print(ret_words[:])
-    return (ret_words)
+    return ret_words
 
 
-def naive_autocorrect(term):
+def naive_autocorrect(term, terms, total_words):
     # potential = nEditDistance(2, term)
     n = 8
     potential = []#multiprocessing.Array('i', range(0))
@@ -127,7 +188,7 @@ def naive_autocorrect(term):
     maxWordDist = 5
 
     for (dist, t) in potential:
-        prob = word_stats(t)
+        prob = word_stats(t, terms, total_words)
         if prob > maxWordProb and maxWordDist > dist:
             maxWordProb = prob
             maxWordDist = dist
@@ -148,32 +209,34 @@ def naive_autocorrect(term):
         #print(maxWordProb, maxWordDist, bestWord)
     return (maxWordProb, bestWord)
 
-def correct_sentance(input, autocorrectfn):
+def correct_sentance(input, autocorrectfn, terms, total_words):
     corrected = []
     input = input.lower()
     for term in input.split(" "):
         if term in terms.keys():
             corrected.append((1, term))
         else:
-            corrected.append(autocorrectfn(term))
+            corrected.append(autocorrectfn(term, terms, total_words))
     return corrected
+
+
+def user_input(terms, total_words):
+    userInput = input("Enter a sentence with spelling errors to be corrected: ")
+    while not userInput == "":
+        cur_time = time()
+        output = correct_sentance(userInput, naive_autocorrect, terms, total_words)
+        # print(time() - cur_time)
+        sentence = " ".join([w for (p, w) in output])
+        print("Autocorrect thinks you meant: ", sentence)
+        print("With probabilities: ", output)
+        userInput = input("Enter a sentence with spelling errors to be corrected: ")
+
+
 # print(minEditDistance(misspelled_word, dictionary[0]))
 #process_original_json('ap201001.json')
-# print(word_stats("a"))
-# print(nEditDistance(4, "somthing"))
-
-
 #print(correct_sentance("This prigram automaticaly fixes spelling rrrora for th user somwht acuraty"))
-# print(minEditDistance("fantastically", "fatasically"))
-# print(total_words)
-# print(word_stats("terror") / 500)
-# print(word_stats("error") / 240)
-userInput = input("Enter a sentence with spelling errors to be corrected: ")
-while not userInput == "":
-    cur_time = time()
-    output = correct_sentance(userInput, naive_autocorrect)
-    #print(time() - cur_time)
-    sentence = " ".join([w for (p,w) in output])
-    print("Autocorrect thinks you meant: ", sentence)
-    print("With probabilities: ", output)
-    userInput = input("Enter a sentence with spelling errors to be corrected: ")
+#terms, total_words = open_single()
+#user_input(terms, total_words)
+#process_ngrams()
+open_ngram()
+
