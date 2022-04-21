@@ -99,8 +99,10 @@ def open_ngram():
     with open('trigrams.json') as json_file:
         trigrams_list = json.load(json_file)
     trigrams = {}
+    total_words = 0
     for trigram in trigrams_list:
         print(trigram)
+        total_words += 3
 
 
 def word_stats(term, terms, total_words):
@@ -235,8 +237,8 @@ def user_input(terms, total_words):
 # print(minEditDistance(misspelled_word, dictionary[0]))
 #process_original_json('ap201001.json')
 #print(correct_sentance("This prigram automaticaly fixes spelling rrrora for th user somwht acuraty"))
-#terms, total_words = open_single()
-#user_input(terms, total_words)
+terms, total_words = open_single()
+user_input(terms, total_words)
 #process_ngrams()
-open_ngram()
+#open_ngram()
 
