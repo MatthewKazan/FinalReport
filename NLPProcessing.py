@@ -62,11 +62,25 @@ def train_model():
                 text += " " + (word.lower())
     tokenized_text = [list(map(str.lower, word_tokenize(sent)))
                       for sent in sent_tokenize(text)]
-    train_data, padded_sents = padded_everygram_pipeline(3, tokenized_text)
-    model = WittenBellInterpolated(3)
+    train_data, padded_sents = padded_everygram_pipeline(2, tokenized_text)
+    model = MLE(2)
     model.fit(train_data, padded_sents)
-    with open('wbi_ngram_model.pkl', 'wb') as fout:
+    with open('bigram_model.pkl', 'wb') as fout:
         pickle.dump(model, fout)
 
 
+def train_model_general(filepath, endfilepath):
+    text = ""
+    with open(filepath) as txt:
+        text = txt.read()
+    tokenized_text = [list(map(str.lower, word_tokenize(sent)))
+                      for sent in sent_tokenize(text)]
+    n = 2
+    train_data, padded_sents = padded_everygram_pipeline(n, tokenized_text)
+    model = MLE(n)  # Lets train a 3-grams maximum likelihood estimation model.
+    model.fit(train_data, padded_sents)
+    with open(endfilepath, 'wb') as fout:
+        pickle.dump(model, fout)
+
 #train_model()
+#train_model_general('venv/en_US.twitter.txt', 'twitter_bigram_model.pkl')
