@@ -1,6 +1,4 @@
 from multiprocessing import Pool
-import json
-from time import time
 import numpy as np
 
 from NLPProcessing import word_stats
@@ -29,7 +27,10 @@ def minEditDistance(source, target):
                                   dists[i - 1][j - 1] + weights["rep_cost"])
     return dists[len(source)][len(target)]
 
+
 oneEditDistances = {}
+
+
 def oneEditDistance(term):
     if term in oneEditDistances.keys():
         return oneEditDistances[term]
@@ -58,37 +59,27 @@ def findSimilarWords(n, word, low, ret_words):
         if abs(len(t) - len(word)) >= n:
             continue
         dist = minEditDistance(word, t)
-        #print(t)
         if dist < n:
             ret_words.append((dist, t))
-            #print(ret_words[:])
     return ret_words
 
 
 def naive_autocorrect(index, sentence, terms, total_words):
-    # potential = nEditDistance(2, term)
     term = sentence[index]
     n = len(term) - 1
-    potential = []#multiprocessing.Array('i', range(0))
+    potential = []
     num_threads = 12
     words = np.array_split(list(terms.keys()), num_threads)
     threads = []
     pool = Pool(processes=num_threads)
     for i in range(num_threads):
-        #print(words[i])
+        # print(words[i])
         x = pool.apply_async(findSimilarWords, (n, term, words[i], []))
-        #x = threading.Thread(target=findSimilarWords, args=(n, term, words[i], potential))
-        # print(potential[:])
         threads.append(x)
-    # pool.close()
-    # pool.join()
-    #     x.start()
     for thread in threads:
-        # thread.join()
         potential.extend(thread.get(timeout=1))
-    # print("in autocorrect", potential)
     maxWordProb = 0
-    bestWord = "???"
+    bestWord = term
     maxWordDist = 5
     for (dist, t) in potential:
         prob = word_stats(t, terms, total_words)
@@ -96,20 +87,20 @@ def naive_autocorrect(index, sentence, terms, total_words):
             maxWordProb = prob
             maxWordDist = dist
             bestWord = t
-            #print("first: ", bestWord)
+            # print("first: ", bestWord)
         elif maxWordDist > dist and abs(maxWordProb - prob) < 50 / total_words:
             maxWordProb = prob
             maxWordDist = dist
             bestWord = t
-            #print("2nd: ", bestWord)
+            # print("2nd: ", bestWord)
 
         elif prob / pow(dist, dist) > maxWordProb / pow(maxWordDist, maxWordDist):
             maxWordProb = prob
             maxWordDist = dist
             bestWord = t
-            #print("3rd: ", bestWord)
+            # print("3rd: ", bestWord)
 
-        #print(maxWordProb, maxWordDist, bestWord)
+        # print(maxWordProb, maxWordDist, bestWord)
     return (maxWordProb, bestWord)
 
 

@@ -4,6 +4,16 @@ import dill as pickle
 from nltk import word_tokenize, sent_tokenize
 from nltk.lm.preprocessing import padded_everygram_pipeline, pad_both_ends
 from nltk.lm import MLE, Laplace, WittenBellInterpolated
+# try:
+#     _create_unverified_https_context = ssl._create_unverified_context
+# except AttributeError:
+#     pass
+# else:
+#     ssl._create_default_https_context = _create_unverified_https_context
+
+# nltk.download('reuters')
+# nltk.download('punkt')
+from nltk.corpus import reuters
 
 
 def process_original_json(filepath):
@@ -48,7 +58,7 @@ def train_hitler_ai():
                       for sent in sent_tokenize(text)]
     n = 3
     train_data, padded_sents = padded_everygram_pipeline(n, tokenized_text)
-    model = MLE(3)  # Lets train a 3-grams maximum likelihood estimation model.
+    model = MLE(3)
     model.fit(train_data, padded_sents)
     with open('hitler_ngram_model.pkl', 'wb') as fout:
         pickle.dump(model, fout)
@@ -75,12 +85,22 @@ def train_model_general(filepath, endfilepath):
         text = txt.read()
     tokenized_text = [list(map(str.lower, word_tokenize(sent)))
                       for sent in sent_tokenize(text)]
-    n = 2
+    with open('venv/unigrams.json') as json_file:
+        terms = json.load(json_file)
+    for sent in tokenized_text:
+        for term in sent:
+            if term in terms.keys():
+                terms[term] += 1
+            else:
+                terms[term] = 1
+    with open("venv/unigrams.json", "w") as outfile:
+        json.dump(terms, outfile)
+    n = 3
     train_data, padded_sents = padded_everygram_pipeline(n, tokenized_text)
-    model = MLE(n)  # Lets train a 3-grams maximum likelihood estimation model.
+    model = Laplace(n)
     model.fit(train_data, padded_sents)
     with open(endfilepath, 'wb') as fout:
         pickle.dump(model, fout)
 
 #train_model()
-#train_model_general('venv/en_US.twitter.txt', 'twitter_bigram_model.pkl')
+#train_model_general('venv/en_US.twitter.txt', 'twitter_trigram_model.pkl')
