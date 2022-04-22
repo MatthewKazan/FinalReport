@@ -1,112 +1,14 @@
-import concurrent.futures
-import multiprocessing
-import string
-
-import nltk
 from multiprocessing import Pool
 import json
-import threading
 from time import time
-
 import numpy as np
-import ssl
 
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-nltk.download('reuters')
-nltk.download('punkt')
-from nltk.corpus import reuters
+from NLPProcessing import word_stats
 
 alph = "abcdefghijklmnopqrstuvwxyz"
 
-misspelled_word = "ztay"
-
 weights = {"del_cost": 2, "ins_cost": 1, "rep_cost": 2}
 
-dictionary = ["apple", "stay", "play"]
-
-def process_original_json(filepath):
-    proc_terms = {}
-    total_words = 0
-    rawfile = open(filepath)
-    terms = [json.loads(line) for line in rawfile]
-    for term in terms:
-        total_words += term["count"]
-        if term["term"] in proc_terms.keys():
-            proc_terms[term["term"]] += term["count"]
-        else:
-            proc_terms[term["term"]] = term["count"]
-    words = sorted(proc_terms.keys(), key=len)
-    final_terms = {}
-    for w in words:
-        final_terms[w] = proc_terms[w]
-    with open("processed_words.json", "w") as outfile:
-        json.dump(final_terms, outfile)
-
-#process_original_json('ap201001.json')
-
-def process_ngrams():
-
-    sentences = reuters.sents()
-    words = reuters.words()
-    trigram = {}
-    fourgram = {}
-    for sentence in sentences:
-        tri = []
-        four = []
-        for word in sentence:
-            if word not in string.punctuation:
-                word = word.lower()
-                if len(tri) < 3:
-                    tri.append(str(word))
-                elif len(tri) >= 3:
-                    if tuple(tri) in trigram.keys():
-                        trigram[tuple(tri)] += 1
-                    else:
-                        trigram[tuple(tri)] = 1
-                if len(four) < 4:
-                    four.append(str(word))
-                elif len(four) >= 4:
-                    if tuple(four) in fourgram.keys():
-                        fourgram[tuple(four)] += 1
-                    else:
-                        fourgram[tuple(four)] = 1
-    tri_strings = {}
-    for tup in trigram.keys():
-        tri_strings[" ".join(tup)] = trigram[tup]
-    four_strings = {}
-    for tup in fourgram.keys():
-        four_strings[" ".join(tup)] = fourgram[tup]
-    with open("trigrams.json", "w") as outfile:
-        json.dump(tri_strings, outfile)
-    with open("fourgrams.json", "w") as outfile:
-        json.dump(four_strings, outfile)
-
-def open_single():
-    with open('processed_words.json') as json_file:
-        terms = json.load(json_file)
-    total_words = 0
-    for term in terms.keys():
-        total_words += terms[term]
-    return terms, total_words
-
-
-def open_ngram():
-    with open('trigrams.json') as json_file:
-        trigrams_list = json.load(json_file)
-    trigrams = {}
-    total_words = 0
-    for trigram in trigrams_list:
-        print(trigram)
-        total_words += 3
-
-
-def word_stats(term, terms, total_words):
-    return terms[term] / total_words
 
 def minEditDistance(source, target):
     dists = []
@@ -148,7 +50,6 @@ def nEditDistance(n, term, terms):
     for i in range(n - 1):
         prev_edits = [w2 for w1 in prev_edits for w2 in oneEditDistance(w1)]
         dict.extend(prev_edits)
-        print(prev_edits)
     return set(w for w in dict if w in terms.keys())
 
 
@@ -164,9 +65,10 @@ def findSimilarWords(n, word, low, ret_words):
     return ret_words
 
 
-def naive_autocorrect(term, terms, total_words):
+def naive_autocorrect(index, sentence, terms, total_words):
     # potential = nEditDistance(2, term)
-    n = 8
+    term = sentence[index]
+    n = len(term) - 1
     potential = []#multiprocessing.Array('i', range(0))
     num_threads = 12
     words = np.array_split(list(terms.keys()), num_threads)
@@ -188,7 +90,6 @@ def naive_autocorrect(term, terms, total_words):
     maxWordProb = 0
     bestWord = "???"
     maxWordDist = 5
-
     for (dist, t) in potential:
         prob = word_stats(t, terms, total_words)
         if prob > maxWordProb and maxWordDist > dist:
@@ -196,7 +97,7 @@ def naive_autocorrect(term, terms, total_words):
             maxWordDist = dist
             bestWord = t
             #print("first: ", bestWord)
-        elif maxWordDist > dist and prob < 50 / total_words:
+        elif maxWordDist > dist and abs(maxWordProb - prob) < 50 / total_words:
             maxWordProb = prob
             maxWordDist = dist
             bestWord = t
@@ -211,34 +112,15 @@ def naive_autocorrect(term, terms, total_words):
         #print(maxWordProb, maxWordDist, bestWord)
     return (maxWordProb, bestWord)
 
-def correct_sentance(input, autocorrectfn, terms, total_words):
-    corrected = []
-    input = input.lower()
-    for term in input.split(" "):
-        if term in terms.keys():
-            corrected.append((1, term))
-        else:
-            corrected.append(autocorrectfn(term, terms, total_words))
-    return corrected
 
 
-def user_input(terms, total_words):
-    userInput = input("Enter a sentence with spelling errors to be corrected: ")
-    while not userInput == "":
-        cur_time = time()
-        output = correct_sentance(userInput, naive_autocorrect, terms, total_words)
-        # print(time() - cur_time)
-        sentence = " ".join([w for (p, w) in output])
-        print("Autocorrect thinks you meant: ", sentence)
-        print("With probabilities: ", output)
-        userInput = input("Enter a sentence with spelling errors to be corrected: ")
 
 
 # print(minEditDistance(misspelled_word, dictionary[0]))
-#process_original_json('ap201001.json')
-#print(correct_sentance("This prigram automaticaly fixes spelling rrrora for th user somwht acuraty"))
-terms, total_words = open_single()
-user_input(terms, total_words)
-#process_ngrams()
-#open_ngram()
+
+#unigrams = open_ngram()
+#print(single_word_prob("pineapples", "the u s", trigrams, fourgrams, total_words))
+#print(correct_sentance("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", naive_autocorrect, unigrams, total_words))
+#print(correct_sentance("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", ngram_autocorrect, unigrams, total_words, trigrams, fourgrams))
+
 
