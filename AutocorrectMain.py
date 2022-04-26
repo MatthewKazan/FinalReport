@@ -36,14 +36,16 @@ def user_input(terms, total_words, n, model=None):
         userInput = input("Enter a sentence with spelling errors to be corrected: ")
 
 
-terms, total_words = open_single()
-#laplace_model = get_model('laplace_ngram_model.pkl')
-#wbi_model = get_model('wbi_ngram_model.pkl')
-#bigram_model = get_model('bigram_model.pkl')
-#train_hitler_ai()
-hitler_model = get_model('hitler_ngram_model.pkl')
-#twitter_model = get_model('twitter_trigram_model.pkl')
-print(generate_sent(hitler_model, 20000))
-#print(generate_sent(twitter_model, 200))
-#user_input(terms, total_words, 2, twitter_model)
-#print(correct_sentence("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", terms, total_words))
+twitter_terms, twitter_total_words = open_single('twitter_unigrams.json')
+reuters_terms, reuters_total_words = open_single('reuters_unigrams.json')
+
+# hitler_model = get_model('OldModels/hitler_ngram_model.pkl')
+twitter_bigram_model = get_model('twitter_bigram_laplace.pkl')
+twitter_trigram_model = get_model('twitter_trigram_laplace.pkl')
+reuters_trigram_model = get_model('reuters_trigram_laplace.pkl')
+
+# print(generate_sent(hitler_model, 20000))
+# print(generate_sent(twitter_model, 200))
+user_input(twitter_terms, twitter_terms, 2, twitter_trigram_model)
+print(correct_sentence("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", twitter_terms,
+                       twitter_terms, 2, twitter_bigram_model))
