@@ -61,7 +61,7 @@ def generate_sent(model, num_words, random_seed=42):
     :param random_seed: Seed value for random.
     """
     content = []
-    for token in model.generate(num_words, random_seed=random_seed):
+    for token in model.generate(num_words):
         if token == '<s>':
             continue
         if token == '</s>':
@@ -71,7 +71,7 @@ def generate_sent(model, num_words, random_seed=42):
 
 
 #real_model = get_model('bigram_model.pkl')
-#hitler_model = get_model('hitler_ngram_model.pkl')
+#
 
 
 #print(ngram_autocorrect(2, ['last', 'year', 'th'], real_model, unigram))

@@ -56,9 +56,9 @@ def train_hitler_ai():
         text = txt.read()
     tokenized_text = [list(map(str.lower, word_tokenize(sent)))
                       for sent in sent_tokenize(text)]
-    n = 3
+    n = 7
     train_data, padded_sents = padded_everygram_pipeline(n, tokenized_text)
-    model = MLE(3)
+    model = WittenBellInterpolated(n)
     model.fit(train_data, padded_sents)
     with open('hitler_ngram_model.pkl', 'wb') as fout:
         pickle.dump(model, fout)

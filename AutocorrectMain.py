@@ -1,7 +1,7 @@
 from time import time
 
-from NgramAutocorrect import ngram_autocorrect, get_model, bigram_autocorrect
-from NLPProcessing import open_single
+from NgramAutocorrect import ngram_autocorrect, get_model, bigram_autocorrect, generate_sent
+from NLPProcessing import open_single, train_hitler_ai
 from NaiveAutocorrect import naive_autocorrect
 
 
@@ -37,9 +37,13 @@ def user_input(terms, total_words, n, model=None):
 
 
 terms, total_words = open_single()
-laplace_model = get_model('laplace_ngram_model.pkl')
+#laplace_model = get_model('laplace_ngram_model.pkl')
 #wbi_model = get_model('wbi_ngram_model.pkl')
 #bigram_model = get_model('bigram_model.pkl')
-twitter_model = get_model('twitter_bigram_model.pkl')
-user_input(terms, total_words, 2, twitter_model)
+#train_hitler_ai()
+hitler_model = get_model('hitler_ngram_model.pkl')
+#twitter_model = get_model('twitter_trigram_model.pkl')
+print(generate_sent(hitler_model, 20000))
+#print(generate_sent(twitter_model, 200))
+#user_input(terms, total_words, 2, twitter_model)
 #print(correct_sentence("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", terms, total_words))
