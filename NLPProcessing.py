@@ -47,7 +47,6 @@ def open_single(filepath):
 
 
 def word_stats(term, terms, total_words):
-    print(term, terms[term], total_words)
     return terms[term] / total_words
 
 

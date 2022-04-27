@@ -13,25 +13,28 @@ def get_model(filepath):
 
 def ngram_autocorrect(index, context, model, terms, n):
     term = context[index]
-    similar = [t for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .85]
-    maxWordProb = float('-inf')
-    bestWord = term
+    similar = [(jaro_winkler_similarity(t, term, p=0.1), t) for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .8]
 
-    for word in set(similar):
+    maxWordProb = 0
+    bestWord = term
+    for (dist, t) in similar:
         prob = 1
         temp = (context.copy())
-        for x in range(0, n):
-            prob *= model.score(word, temp[index - x:index])
-            # print(word, prob)
+        for x in range(1, n):
+            prob *= model.score(t, temp[index - x:index])
+
+        prob *= 1000000000
+        prob += dist
         if prob > maxWordProb:
             maxWordProb = prob
-            bestWord = word
+            bestWord = t
+
     return maxWordProb, bestWord
 
 
 def bigram_autocorrect(index, context, model, terms):
     term = context[index]
-    similar = [t for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .85]
+    similar = [t for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .8]
     maxWordProb = float('-inf')
     bestWord = term
 

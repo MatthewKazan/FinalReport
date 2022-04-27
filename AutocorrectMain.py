@@ -46,7 +46,6 @@ reuters_trigram_model = get_model('reuters_trigram_laplace.pkl')
 
 # print(generate_sent(hitler_model, 20000))
 # print(generate_sent(twitter_model, 200))
-print(twitter_total_words, twitter_terms['hello'])
 #user_input(twitter_terms, twitter_total_words, 1, twitter_trigram_model)
-print(correct_sentence("Ths prigram auomaticaly fixs speling rrrora for the user somwht acuratly", twitter_terms,
-                       twitter_total_words, 1, twitter_bigram_model))
+print(correct_sentence("Ths prigram auomaticaly fixs speling mstaks for the user somwht acuratly", twitter_terms,
+                       twitter_total_words, 3, twitter_trigram_model))
