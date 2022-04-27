@@ -71,13 +71,14 @@ def naive_autocorrect(index, sentence, terms, total_words):
     num_threads = 12
     words = np.array_split(list(terms.keys()), num_threads)
     threads = []
-    pool = Pool(processes=num_threads)
-    for i in range(num_threads):
-        # print(words[i])
-        x = pool.apply_async(findSimilarWords, (n, term, words[i], []))
-        threads.append(x)
-    for thread in threads:
-        potential.extend(thread.get(timeout=1))
+    # pool = Pool(processes=num_threads)
+    # for i in range(num_threads):
+    #     # print(words[i])
+    #     x = pool.apply_async(findSimilarWords, (n, term, words[i], []))
+    #     threads.append(x)
+    # for thread in threads:
+    #     potential.extend(thread.get(timeout=1))
+    potential = findSimilarWords(n, term, terms.keys(), [])
     maxWordProb = 0
     bestWord = term
     maxWordDist = 5

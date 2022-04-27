@@ -31,7 +31,7 @@ def ngram_autocorrect(index, context, model, terms, n):
 
 def bigram_autocorrect(index, context, model, terms):
     term = context[index]
-    similar = [t for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .8]
+    similar = [t for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .85]
     maxWordProb = float('-inf')
     bestWord = term
 
