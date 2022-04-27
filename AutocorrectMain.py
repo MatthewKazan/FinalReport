@@ -47,5 +47,7 @@ reuters_trigram_model = get_model('reuters_trigram_laplace.pkl')
 # print(generate_sent(hitler_model, 20000))
 # print(generate_sent(twitter_model, 200))
 #user_input(twitter_terms, twitter_total_words, 1, twitter_trigram_model)
-print(correct_sentence("Ths prigram auomaticaly fixs speling mstaks for the user somwht acuratly", twitter_terms,
+print(correct_sentence("Ths prigram auomaticaly fixs speling istks for the user somwht acuratly", twitter_terms,
+                       twitter_total_words, 3, twitter_trigram_model))
+print(correct_sentence("Both Microsoft and Yahoo ! began yscissig succ an arlangement .", twitter_terms,
                        twitter_total_words, 3, twitter_trigram_model))

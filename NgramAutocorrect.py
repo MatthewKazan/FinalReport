@@ -15,16 +15,30 @@ def ngram_autocorrect(index, context, model, terms, n):
     term = context[index]
     similar = [(jaro_winkler_similarity(t, term, p=0.1), t) for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .8]
 
-    maxWordProb = 0
+
+    maxProb = float('-inf')
+    minProb = float('inf')
+    probs = {}
     bestWord = term
     for (dist, t) in similar:
-        prob = 1
+        prob = 0
         temp = (context.copy())
         for x in range(1, n):
-            prob *= model.score(t, temp[index - x:index])
-
-        prob *= 1000000000
+            if index - x >= 0:
+                prob += (model.logscore(t, temp[index - x:index])) * (n - x)
+        prob += model.logscore(t) / 5
+        prob /= n
+        probs[t] = prob
+        minProb = min(minProb, prob)
+        maxProb = max(maxProb, prob)
+    maxWordProb = 0
+    for (dist, t) in similar:
+        prob = (probs[t] - minProb) / ((maxProb + 1) - minProb)
+        prob /= 7
+        # print(t, prob)
         prob += dist
+        # print(t, prob, dist)
+
         if prob > maxWordProb:
             maxWordProb = prob
             bestWord = t
