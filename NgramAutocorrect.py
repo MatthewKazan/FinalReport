@@ -1,6 +1,4 @@
 import dill as pickle
-import difflib
-import nltk
 from nltk.metrics.distance import jaro_winkler_similarity, jaccard_distance, edit_distance, jaro_similarity
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 
@@ -14,7 +12,6 @@ def get_model(filepath):
 def ngram_autocorrect(index, context, model, terms, n):
     term = context[index]
     similar = [(jaro_winkler_similarity(t, term, p=0.1), t) for t in terms.keys() if jaro_winkler_similarity(t, term, p=0.1) > .8]
-
 
     maxProb = float('-inf')
     minProb = float('inf')
@@ -71,11 +68,10 @@ def bigram_autocorrect(index, context, model, terms):
 detokenize = TreebankWordDetokenizer().detokenize
 
 
-def generate_sent(model, num_words, random_seed=42):
+def generate_sent(model, num_words):
     """
     :param model: An ngram language model from `nltk.lm.model`.
     :param num_words: Max no. of words to generate.
-    :param random_seed: Seed value for random.
     """
     content = []
     for token in model.generate(num_words):

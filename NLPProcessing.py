@@ -79,7 +79,7 @@ def train_model():
         pickle.dump(model, fout)
 
 
-def train_model_general(filepath, endfilepath, n):
+def train_model_general(filepath, endfilepath, unigram_path, n):
     text = ""
     with open(filepath) as txt:
         text = txt.read()
@@ -97,7 +97,7 @@ def train_model_general(filepath, endfilepath, n):
                 terms[term] += 1
             else:
                 terms[term] = 1
-    with open("venv/twitter_unigrams.json", "w") as outfile:
+    with open(unigram_path, "w") as outfile:
         json.dump(terms, outfile)
     train_data, padded_sents = padded_everygram_pipeline(n, tokenized_text)
     model = Laplace(n)
@@ -107,4 +107,4 @@ def train_model_general(filepath, endfilepath, n):
 
 
 #train_model()
-#train_model_general('venv/en_US.twitter.txt', 'twitter_trigram_laplace.pkl', 3)
+#train_model_general('venv/en_US.twitter.txt', 'twitter_trigram_laplace.pkl', 'twitter_unigrams.pkl', 3)
